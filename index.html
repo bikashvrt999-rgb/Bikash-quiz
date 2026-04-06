@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bikash Quiz AI</title>
+<link href="https://fonts.googleapis.com/css2?family=Tiro+Bangla&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0a0a0f;--card:#1a1a26;--border:#2a2a3e;
+  --accent:#6c63ff;--accent2:#ff6584;--green:#43e97b;--red:#ff6584;
+  --text:#e8e8f0;--muted:#7878a0;
+}
+body{background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;min-height:100vh;padding:16px}
+.header{text-align:center;padding:24px 0 16px}
+.badge{display:inline-block;background:linear-gradient(135deg,var(--accent),var(--accent2));padding:5px 16px;border-radius:100px;font-size:11px;font-weight:700;letter-spacing:2px;margin-bottom:10px}
+h1{font-size:36px;font-weight:800;background:linear-gradient(135deg,#fff 30%,var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:var(--muted);font-size:13px;margin-top:6px;font-family:'Tiro Bangla',serif}
+.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px;margin-bottom:14px;position:relative;overflow:hidden}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--accent),var(--accent2))}
+.label{font-size:11px;font-weight:700;letter-spacing:2px;color:var(--accent);text-transform:uppercase;margin-bottom:12px}
+.grid{display:grid;gap:8px}
+.g2{grid-template-columns:1fr 1fr}
+.g3{grid-template-columns:1fr 1fr 1fr}
+.chip{background:#12121a;border:1.5px solid var(--border);border-radius:10px;padding:10px 8px;text-align:center;cursor:pointer;font-size:12px;font-weight:600;color:var(--muted);transition:all .2s;font-family:'Tiro Bangla',serif;line-height:1.4}
+.chip:hover,.chip.on{border-color:var(--accent);color:#fff;background:rgba(108,99,255,.15)}
+.chip .ico{font-size:16px;display:block;margin-bottom:3px}
+input[type=text],input[type=password]{width:100%;background:#12121a;border:1.5px solid var(--border);border-radius:10px;padding:13px 15px;color:var(--text);font-size:14px;font-family:'Tiro Bangla',serif;outline:none;transition:border-color .2s}
+input:focus{border-color:var(--accent)}
+input::placeholder{color:var(--muted)}
+.row{display:flex;align-items:center;gap:10px;margin-top:10px}
+input[type=range]{flex:1;-webkit-appearance:none;height:4px;background:var(--border);border-radius:4px;outline:none}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:50%;cursor:pointer}
+.val{background:var(--accent);color:#fff;font-size:13px;font-weight:700;padding:4px 12px;border-radius:100px;min-width:46px;text-align:center}
+.btn{width:100%;padding:15px;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:'Syne',sans-serif;transition:all .2s}
+.btn-p{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;box-shadow:0 4px 20px rgba(108,99,255,.3)}
+.btn-p:hover{transform:translateY(-2px)}
+.btn-p:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.btn-o{background:transparent;border:1.5px solid var(--border);color:var(--muted);margin-top:8px;font-size:13px;padding:11px}
+.btn-o:hover{border-color:var(--accent);color:var(--accent)}
+.err{background:rgba(255,101,132,.1);border:1px solid rgba(255,101,132,.3);border-radius:10px;padding:12px;font-size:13px;font-family:'Tiro Bangla',serif;color:var(--red);margin-bottom:12px;display:none}
+.err.on{display:block}
+/* loading */
+.spin{width:44px;height:44px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 16px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.load-txt{color:var(--muted);font-family:'Tiro Bangla',serif;font-size:14px;text-align:center}
+/* quiz */
+.qmeta{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.qinfo{font-size:13px;color:var(--muted);font-weight:600}
+.timer{background:#12121a;border:1.5px solid var(--border);border-radius:10px;padding:7px 14px;font-size:15px;font-weight:700;font-family:monospace;color:var(--green);min-width:60px;text-align:center}
+.timer.warn{color:var(--red);border-color:var(--red);animation:blink .5s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.5}}
+.pbar{height:4px;background:var(--border);border-radius:4px;margin-bottom:20px;overflow:hidden}
+.pfill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:4px;transition:width .4s}
+.qnum{font-size:11px;font-weight:700;letter-spacing:2px;color:var(--accent);text-transform:uppercase;margin-bottom:8px}
+.qtxt{font-size:16px;font-weight:600;line-height:1.6;margin-bottom:18px;font-family:'Tiro Bangla',serif}
+.opts{display:flex;flex-direction:column;gap:9px}
+.opt{background:#12121a;border:1.5px solid var(--border);border-radius:12px;padding:13px 14px;cursor:pointer;font-size:14px;font-family:'Tiro Bangla',serif;color:var(--text);transition:all .2s;display:flex;align-items:center;gap:11px}
+.opt:hover:not(.dis){border-color:var(--accent);background:rgba(108,99,255,.08)}
+.opt.ok{border-color:var(--green);background:rgba(67,233,123,.12);color:var(--green)}
+.opt.no{border-color:var(--red);background:rgba(255,101,132,.12);color:var(--red)}
+.opt.dis{cursor:default}
+.ol{width:26px;height:26px;border-radius:7px;background:var(--border);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;font-family:monospace;flex-shrink:0;color:var(--muted)}
+.opt.ok .ol{background:var(--green);color:#000}
+.opt.no .ol{background:var(--red);color:#fff}
+.exp{background:rgba(108,99,255,.08);border:1px solid rgba(108,99,255,.2);border-radius:10px;padding:13px;margin-top:12px;font-size:13px;font-family:'Tiro Bangla',serif;color:var(--muted);line-height:1.6;display:none}
+.exp.on{display:block}
+.nxt{margin-top:14px;display:none}
+.nxt.on{display:block}
+/* result */
+.rcircle{width:110px;height:110px;border-radius:50%;background:conic-gradient(var(--accent) var(--p,0%),var(--border) 0);display:flex;align-items:center;justify-content:center;margin:0 auto 20px;position:relative}
+.rcircle::before{content:'';position:absolute;width:84px;height:84px;background:var(--card);border-radius:50%}
+.rscore{position:relative;z-index:1;text-align:center}
+.rscore .pct{font-size:22px;font-weight:800}
+.rscore .lbl{font-size:11px;color:var(--muted)}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:18px}
+.stat{background:#12121a;border:1px solid var(--border);border-radius:12px;padding:13px 8px;text-align:center}
+.stat .n{font-size:22px;font-weight:800}
+.stat .t{font-size:11px;color:var(--muted);margin-top:2px;font-family:'Tiro Bangla',serif}
+.stat.g .n{color:var(--green)}
+.stat.r .n{color:var(--red)}
+.stat.b .n{color:var(--accent)}
+.abtn{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:10px}
+/* review */
+.ritem{background:#12121a;border-radius:12px;padding:14px;margin-bottom:10px;border-left:3px solid var(--border)}
+.ritem.ok{border-left-color:var(--green)}
+.ritem.no{border-left-color:var(--red)}
+.rq{font-size:13px;font-family:'Tiro Bangla',serif;margin-bottom:7px}
+.ra{font-size:12px;font-family:'Tiro Bangla',serif;color:var(--muted);line-height:1.7}
+.ra .g{color:var(--green);font-weight:600}
+.ra .r{color:var(--red)}
+/* page */
+.pg{display:none}
+.pg.on{display:block}
+/* toast */
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--card);border:1px solid var(--border);border-radius:12px;padding:11px 22px;font-size:13px;font-family:'Tiro Bangla',serif;z-index:999;transition:transform .3s;white-space:nowrap}
+.toast.on{transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="badge">✦ BIKASH WITH AI</div>
+  <h1>Quiz AI</h1>
+  <p class="sub">AI দিয়ে তৈরি প্রশ্ন — যেকোনো বিষয়ে</p>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<!-- API KEY PAGE -->
+<div id="p0" class="pg on">
+  <div class="card">
+    <div class="label">🔑 Gemini API Key দাও</div>
+    <p style="font-family:'Tiro Bangla',serif;font-size:13px;color:var(--muted);margin-bottom:14px;line-height:1.7">
+      👉 <strong style="color:var(--text)">aistudio.google.com/apikey</strong> থেকে free key নাও<br>
+      🔒 Key শুধু তোমার browser-এ থাকবে
+    </p>
+    <input type="password" id="k" placeholder="AIzaSy..." />
+    <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);margin-top:10px;margin-bottom:14px;cursor:pointer">
+      <input type="checkbox" id="sk" style="width:16px;height:16px;accent-color:var(--accent)">
+      এই device-এ মনে রাখো
+    </label>
+    <div id="ke" class="err">⚠️ AIzaSy দিয়ে শুরু হওয়া key দাও</div>
+    <button class="btn btn-p" onclick="saveKey()">✅ শুরু করো</button>
+  </div>
+</div>
+
+<!-- SETUP PAGE -->
+<div id="p1" class="pg">
+  <!-- Board -->
+  <div class="card">
+    <div class="label">📚 Board / Exam</div>
+    <div class="grid g2" id="boards">
+      <div class="chip on" data-v="Madhyamik (MP)"><span class="ico">🏫</span>Madhyamik</div>
+      <div class="chip" data-v="Higher Secondary (HS)"><span class="ico">🎓</span>উচ্চ মাধ্যমিক</div>
+      <div class="chip" data-v="College/Graduation"><span class="ico">🏛️</span>College</div>
+      <div class="chip" data-v="WBSSC"><span class="ico">📋</span>WBSSC</div>
+      <div class="chip" data-v="SSC (Central)"><span class="ico">📝</span>SSC</div>
+      <div class="chip" data-v="NEFT/Banking"><span class="ico">🏦</span>NEFT/Banking</div>
+      <div class="chip" data-v="JEE"><span class="ico">⚙️</span>JEE</div>
+      <div class="chip" data-v="NEET"><span class="ico">🩺</span>NEET</div>
+      <div class="chip" data-v="UPSC"><span class="ico">🇮🇳</span>UPSC</div>
+      <div class="chip" data-v="RRB/Railway"><span class="ico">🚂</span>Railway</div>
+      <div class="chip" data-v="WB Competitive"><span class="ico">🏆</span>WB Competitive</div>
+      <div class="chip" data-v="General GK"><span class="ico">🌍</span>General GK</div>
+    </div>
+  </div>
+  <!-- Subject -->
+  <div class="card">
+    <div class="label">📖 বিষয় লেখো</div>
+    <input type="text" id="subj" placeholder="যেমন: বাংলা ব্যাকরণ, Physics, ইতিহাস..." />
+  </div>
+  <!-- Language -->
+  <div class="card">
+    <div class="label">🌐 ভাষা</div>
+    <div class="grid g3" id="langs">
+      <div class="chip on" data-v="Bengali">বাংলা</div>
+      <div class="chip" data-v="English">English</div>
+      <div class="chip" data-v="Hindi">हिंदी</div>
+    </div>
+  </div>
+  <!-- Difficulty -->
+  <div class="card">
+    <div class="label">⚡ কঠিনতা</div>
+    <div class="grid g3" id="diffs">
+      <div class="chip on" data-v="Easy">🟢 সহজ</div>
+      <div class="chip" data-v="Medium">🟡 মাঝারি</div>
+      <div class="chip" data-v="Hard">🔴 কঠিন</div>
+    </div>
+  </div>
+  <!-- Count -->
+  <div class="card">
+    <div class="label">🔢 প্রশ্ন সংখ্যা</div>
+    <div class="row">
+      <input type="range" min="5" max="20" value="10" id="qc" oninput="document.getElementById('qcv').textContent=this.value">
+      <div class="val" id="qcv">10</div>
+    </div>
+  </div>
+  <!-- Timer -->
+  <div class="card">
+    <div class="label">⏱️ প্রতি প্রশ্নে সময়</div>
+    <div class="row">
+      <input type="range" min="15" max="120" value="30" step="5" id="tc" oninput="document.getElementById('tcv').textContent=this.value+'s'">
+      <div class="val" id="tcv">30s</div>
+    </div>
+  </div>
+  <div id="se" class="err">⚠️ বিষয়ের নাম লেখো!</div>
+  <button class="btn btn-p" onclick="startQuiz()">🚀 Quiz শুরু করো</button>
+  <button class="btn btn-o" onclick="changeKey()">🔑 API Key পরিবর্তন</button>
+</div>
+
+<!-- LOADING PAGE -->
+<div id="p2" class="pg">
+  <div class="card" style="text-align:center;padding:48px 20px">
+    <div class="spin"></div>
+    <div class="load-txt" id="ltxt">AI প্রশ্ন তৈরি করছে...</div>
+  </div>
+</div>
+
+<!-- QUIZ PAGE -->
+<div id="p3" class="pg">
+  <div class="card">
+    <div class="qmeta">
+      <div class="qinfo" id="qinfo">প্রশ্ন ১/১০</div>
+      <div class="timer" id="tmr">30s</div>
+    </div>
+    <div class="pbar"><div class="pfill" id="pfill" style="width:10%"></div></div>
+    <div class="qnum" id="qnum">QUESTION 1</div>
+    <div class="qtxt" id="qtxt"></div>
+    <div class="opts" id="opts"></div>
+    <div class="exp" id="exp"></div>
+    <div class="nxt" id="nxt">
+      <button class="btn btn-p" onclick="nextQ()">পরের প্রশ্ন →</button>
+    </div>
+  </div>
+</div>
+
+<!-- RESULT PAGE -->
+<div id="p4" class="pg">
+  <div class="card" style="text-align:center">
+    <div class="label" style="text-align:center">🏆 ফলাফল</div>
+    <div class="rcircle" id="rc"><div class="rscore"><div class="pct" id="rpct">0%</div><div class="lbl">score</div></div></div>
+    <div id="rgrade" style="font-size:20px;font-weight:800;margin-bottom:6px"></div>
+    <div id="rmsg" style="font-size:13px;color:var(--muted);font-family:'Tiro Bangla',serif;margin-bottom:18px"></div>
+    <div class="stats">
+      <div class="stat g"><div class="n" id="rc2">0</div><div class="t">সঠিক ✅</div></div>
+      <div class="stat r"><div class="n" id="rw">0</div><div class="t">ভুল ❌</div></div>
+      <div class="stat b"><div class="n" id="rt">0s</div><div class="t">সময়</div></div>
+    </div>
+    <div class="abtn">
+      <button class="btn btn-o" onclick="toggleReview()">📋 Review</button>
+      <button class="btn btn-o" onclick="dlPDF()">📄 Download</button>
+    </div>
+    <div class="abtn" style="margin-top:8px">
+      <button class="btn btn-o" onclick="shareRes()">🔗 Share</button>
+      <button class="btn btn-p" onclick="restart()">🔄 আবার খেলো</button>
+    </div>
+  </div>
+  <div id="rev" style="display:none">
+    <div class="card">
+      <div class="label">📋 উত্তর পর্যালোচনা</div>
+      <div id="revlist"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const S={board:'Madhyamik (MP)',lang:'Bengali',diff:'Easy',qc:10,tc:30,questions:[],cur:0,score:0,answers:[],tLeft:0,tInt:null,tTotal:0,tStart:0};
+let apiKey='';
+
+// chip select
+function chips(id,key){
+  document.querySelectorAll('#'+id+' .chip').forEach(c=>{
+    c.onclick=()=>{
+      document.querySelectorAll('#'+id+' .chip').forEach(x=>x.classList.remove('on'));
+      c.classList.add('on');
+      S[key]=c.dataset.v;
+    };
+  });
+}
+chips('boards','board');
+chips('langs','lang');
+chips('diffs','diff');
+
+function page(id){document.querySelectorAll('.pg').forEach(p=>p.classList.remove('on'));document.getElementById(id).classList.add('on');}
+
+// API KEY
+function init(){
+  const s=localStorage.getItem('bqk');
+  if(s){apiKey=s;page('p1');}else{page('p0');}
+}
+function saveKey(){
+  const v=document.getElementById('k').value.trim();
+  const e=document.getElementById('ke');
+  if(!v.startsWith('AIza')){e.classList.add('on');setTimeout(()=>e.classList.remove('on'),3000);return;}
+  apiKey=v;
+  if(document.getElementById('sk').checked)localStorage.setItem('bqk',v);
+  page('p1');
+}
+function changeKey(){localStorage.removeItem('bqk');apiKey='';page('p0');}
+
+// START
+async function startQuiz(){
+  const subj=document.getElementById('subj').value.trim();
+  if(!subj){const e=document.getElementById('se');e.classList.add('on');setTimeout(()=>e.classList.remove('on'),3000);return;}
+  S.qc=+document.getElementById('qc').value;
+  S.tc=+document.getElementById('tc').value;
+  S.cur=0;S.score=0;S.answers=[];S.tStart=Date.now();
+  page('p2');
+  const msgs=['AI প্রশ্ন তৈরি করছে...','বিষয় বিশ্লেষণ করছে...','প্রশ্ন সাজাচ্ছে...'];
+  let mi=0;const lt=document.getElementById('ltxt');
+  const li=setInterval(()=>{lt.textContent=msgs[mi++%msgs.length];},1500);
+  try{
+    S.questions=await genQ(subj);
+    clearInterval(li);
+    page('p3');renderQ();
+  }catch(e){
+    clearInterval(li);
+    page('p1');
+    toast('❌ '+e.message);
+  }
+}
+
+async function genQ(subj){
+  const lm={Bengali:'Bengali (বাংলা)',English:'English',Hindi:'Hindi (हिंदी)'};
+  const prompt=`Generate exactly ${S.qc} multiple choice quiz questions for Indian students.
+Board/Exam: ${S.board}
+Subject: ${subj}
+Difficulty: ${S.diff}
+Language: ${lm[S.lang]} - write everything in this language only.
+
+Return ONLY a JSON array, no markdown, no explanation:
+[{"q":"question","opts":["A","B","C","D"],"ans":0,"exp":"explanation"}]
+
+Rules:
+- ans = 0-based index of correct option
+- 4 distinct options each
+- relevant to ${S.board} level
+- concise explanations`;
+
+  const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`,{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({
+      contents:[{parts:[{text:prompt}]}],
+      generationConfig:{temperature:0.7,maxOutputTokens:2048}
+    })
+  });
+
+  if(!res.ok){
+    const err=await res.json().catch(()=>({}));
+    if(res.status===429)throw new Error('একটু অপেক্ষা করো (১ মিনিট) তারপর আবার চেষ্টা করো');
+    if(res.status===400)throw new Error('API Key ভুল। নতুন key দাও');
+    if(res.status===403)throw new Error('API Key কাজ করছে না। নতুন key নাও');
+    throw new Error('Error '+res.status+': '+(err.error?.message||''));
+  }
+
+  const data=await res.json();
+  let txt=data.candidates?.[0]?.content?.parts?.[0]?.text||'';
+  txt=txt.replace(/```json|```/g,'').trim();
+  // find JSON array
+  const m=txt.match(/\[[\s\S]*\]/);
+  if(!m)throw new Error('প্রশ্ন পাওয়া গেল না, আবার চেষ্টা করো');
+  const arr=JSON.parse(m[0]);
+  if(!arr.length)throw new Error('প্রশ্ন পাওয়া গেল না');
+  return arr;
+}
+
+// RENDER
+function renderQ(){
+  const q=S.questions[S.cur],tot=S.questions.length,i=S.cur;
+  document.getElementById('qinfo').textContent=`প্রশ্ন ${i+1}/${tot}`;
+  document.getElementById('qnum').textContent=`QUESTION ${i+1}`;
+  document.getElementById('qtxt').textContent=q.q;
+  document.getElementById('pfill').style.width=((i+1)/tot*100)+'%';
+  const opts=document.getElementById('opts');
+  opts.innerHTML='';
+  ['A','B','C','D'].forEach((l,j)=>{
+    const d=document.createElement('div');
+    d.className='opt';
+    d.innerHTML=`<span class="ol">${l}</span><span>${q.opts[j]}</span>`;
+    d.onclick=()=>pick(j);
+    opts.appendChild(d);
+  });
+  document.getElementById('exp').className='exp';
+  document.getElementById('nxt').className='nxt';
+  startTimer();
+}
+
+function startTimer(){
+  clearInterval(S.tInt);S.tLeft=S.tc;updTimer();
+  S.tInt=setInterval(()=>{S.tLeft--;updTimer();if(S.tLeft<=0){clearInterval(S.tInt);timeUp();}},1000);
+}
+function updTimer(){
+  const t=document.getElementById('tmr');
+  t.textContent=S.tLeft+'s';
+  t.className=S.tLeft<=5?'timer warn':'timer';
+}
+function timeUp(){
+  S.answers.push({sel:-1,ans:S.questions[S.cur].ans});
+  showAns(-1);toast('⏰ সময় শেষ!');
+}
+function pick(i){
+  clearInterval(S.tInt);
+  const q=S.questions[S.cur];
+  S.answers.push({sel:i,ans:q.ans});
+  if(i===q.ans)S.score++;
+  showAns(i);
+}
+function showAns(sel){
+  const q=S.questions[S.cur];
+  document.querySelectorAll('.opt').forEach((o,i)=>{
+    o.classList.add('dis');o.onclick=null;
+    if(i===q.ans)o.classList.add('ok');
+    else if(i===sel)o.classList.add('no');
+  });
+  const e=document.getElementById('exp');
+  e.innerHTML=`<strong>💡 ব্যাখ্যা:</strong> ${q.exp}`;
+  e.className='exp on';
+  document.getElementById('nxt').className='nxt on';
+}
+function nextQ(){
+  S.cur++;
+  if(S.cur>=S.questions.length)showResult();
+  else renderQ();
+}
+
+// RESULT
+function showResult(){
+  S.tTotal=Math.round((Date.now()-S.tStart)/1000);
+  const tot=S.questions.length,pct=Math.round(S.score/tot*100);
+  document.getElementById('rc').style.setProperty('--p',pct+'%');
+  document.getElementById('rpct').textContent=pct+'%';
+  document.getElementById('rc2').textContent=S.score;
+  document.getElementById('rw').textContent=tot-S.score;
+  document.getElementById('rt').textContent=S.tTotal+'s';
+  const g=pct>=90?['🥇 অসাধারণ!','তুমি একজন মেধাবী ছাত্র!']:pct>=75?['🥈 খুব ভালো!','চমৎকার পারফরম্যান্স!']:pct>=50?['🥉 ভালো চেষ্টা','আরো পড়লে আরো ভালো হবে।']:['📚 আরো পড়ো','হতাশ হয়ো না, আবার চেষ্টা করো!'];
+  document.getElementById('rgrade').textContent=g[0];
+  document.getElementById('rmsg').textContent=g[1];
+  document.getElementById('rev').style.display='none';
+  page('p4');
+}
+function toggleReview(){
+  const r=document.getElementById('rev');
+  if(r.style.display==='block'){r.style.display='none';return;}
+  const L=['A','B','C','D'],list=document.getElementById('revlist');
+  list.innerHTML='';
+  S.questions.forEach((q,i)=>{
+    const a=S.answers[i],ok=a&&a.sel===a.ans;
+    const d=document.createElement('div');
+    d.className='ritem '+(ok?'ok':'no');
+    d.innerHTML=`<div class="rq">${i+1}. ${q.q}</div><div class="ra">${a&&a.sel>=0?`তোমার: <span class="${ok?'g':'r'}">${L[a.sel]}. ${q.opts[a.sel]}</span>`:`<span class="r">⏰ সময় শেষ</span>`}<br>সঠিক: <span class="g">${L[q.ans]}. ${q.opts[q.ans]}</span></div>`;
+    list.appendChild(d);
+  });
+  r.style.display='block';r.scrollIntoView({behavior:'smooth'});
+}
+function dlPDF(){
+  const tot=S.questions.length,pct=Math.round(S.score/tot*100),L=['A','B','C','D'];
+  let h=`<!DOCTYPE html><html><head><meta charset="UTF-8"><style>body{font-family:Arial,sans-serif;padding:24px;max-width:750px;margin:0 auto}h1{color:#6c63ff}p{color:#666;font-size:13px}.sb{background:#f0f0ff;border:2px solid #6c63ff;border-radius:10px;padding:14px;text-align:center;margin:16px 0}.sb h2{font-size:32px;color:#6c63ff;margin:0}.qb{margin-bottom:16px;padding:14px;border:1px solid #eee;border-radius:8px}.qn{font-size:11px;color:#6c63ff;font-weight:bold;text-transform:uppercase;letter-spacing:1px}.qt{font-size:14px;font-weight:600;margin:6px 0 10px}.op{font-size:13px;padding:5px 9px;border-radius:5px;margin:2px 0}.ok{background:#e8fff0;color:#00a854;font-weight:600}.no{background:#fff0f0;color:#e53935}.ep{font-size:12px;color:#555;background:#f8f8ff;padding:9px;border-radius:6px;margin-top:7px}</style></head><body><h1>🎯 Bikash Quiz AI</h1><p>${S.board} | ${document.getElementById('subj').value} | ${S.lang} | ${S.diff}</p><div class="sb"><h2>${pct}%</h2><p>সঠিক: ${S.score}/${tot} | সময়: ${S.tTotal}s</p></div>`;
+  S.questions.forEach((q,i)=>{
+    const a=S.answers[i];
+    h+=`<div class="qb"><div class="qn">Q${i+1}</div><div class="qt">${q.q}</div>`;
+    q.opts.forEach((o,j)=>{
+      let c='';if(j===q.ans)c='ok';else if(a&&a.sel===j)c='no';
+      h+=`<div class="op ${c}">${L[j]}. ${o}${j===q.ans?' ✅':a&&a.sel===j?' ❌':''}</div>`;
+    });
+    h+=`<div class="ep">💡 ${q.exp}</div></div>`;
+  });
+  h+='</body></html>';
+  const b=new Blob([h],{type:'text/html;charset=utf-8'});
+  const u=URL.createObjectURL(b);
+  const a=document.createElement('a');a.href=u;a.download=`quiz-${Date.now()}.html`;a.click();
+  URL.revokeObjectURL(u);toast('📄 Download হচ্ছে!');
+}
+function shareRes(){
+  const tot=S.questions.length,pct=Math.round(S.score/tot*100);
+  const txt=`🎯 Bikash Quiz AI\nScore: ${pct}%\n✅ ${S.score}/${tot} সঠিক\n📚 ${S.board}\n\n👉 bikashvrt999-rgb.github.io/Bikash-quiz`;
+  if(navigator.share)navigator.share({title:'Bikash Quiz AI',text:txt});
+  else navigator.clipboard.writeText(txt).then(()=>toast('✅ Copied!'));
+}
+function restart(){clearInterval(S.tInt);page('p1');}
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('on');setTimeout(()=>t.classList.remove('on'),3000);}
+
+init();
+</script>
+</body>
+</html>
