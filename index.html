@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bikash Quiz AI — India's Smartest Quiz Generator</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Tiro+Bangla&family=Noto+Sans+Devanagari:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #080c10;
+  --surface: #0f1520;
+  --surface2: #161f2e;
+  --orange: #ff6b1a;
+  --orange2: #ffaa00;
+  --green: #00e676;
+  --cyan: #00cfff;
+  --red: #ff4444;
+  --text: #eef2f7;
+  --muted: #6b7a90;
+  --border: rgba(255,107,26,0.15);
+  --correct: rgba(0,230,118,0.12);
+  --wrong: rgba(255,68,68,0.12);
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior:smooth; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Rajdhani', sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+.bg-glow {
+  position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background:
+    radial-gradient(ellipse 60% 40% at 80% 10%, rgba(255,107,26,0.07) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 30% at 10% 80%, rgba(0,207,255,0.05) 0%, transparent 60%);
+}
+.particles { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+.particle {
+  position: absolute; width: 2px; height: 2px;
+  background: var(--orange); border-radius: 50%;
+  animation: rise linear infinite; opacity: 0;
+}
+@keyframes rise {
+  0% { transform: translateY(100vh) scale(0); opacity: 0; }
+  10% { opacity: 0.6; }
+  90% { opacity: 0.2; }
+  100% { transform: translateY(-20px) scale(1.5); opacity: 0; }
+}
+header {
+  position: relative; z-index: 10;
+  text-align: center;
+  padding: 28px 20px 20px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(8,12,16,0.85);
+  backdrop-filter: blur(10px);
+}
+.powered-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 14px; border-radius: 20px;
+  border: 1px solid rgba(0,230,118,0.3);
+  background: rgba(0,230,118,0.05);
+  color: var(--green); font-size: 11px; letter-spacing: 1.5px;
+  text-transform: uppercase; margin-bottom: 14px;
+}
+.powered-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); animation: blink 1.5s infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+h1 { font-size: clamp(26px, 7vw, 50px); font-weight: 700; line-height: 1.1; }
+.title-line1 { color: var(--text); display: block; }
+.title-line2 {
+  display: block;
+  background: linear-gradient(90deg, var(--orange), var(--orange2), var(--green));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-size: 200% auto;
+  animation: shine 3s linear infinite;
+}
+@keyframes shine { 0%{background-position:0% center} 100%{background-position:200% center} }
+.subtitle { font-size: 12px; color: var(--muted); margin: 8px 0 14px; letter-spacing: 2px; text-transform: uppercase; }
+.badges { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+.badge {
+  padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 600;
+  border: 1px solid var(--border); background: var(--surface); color: var(--muted);
+}
+.lang-bar { display: flex; gap: 8px; justify-content: center; padding: 14px 20px 0; position: relative; z-index: 10; }
+.lang-btn {
+  padding: 7px 18px; border-radius: 8px; border: 1px solid var(--border);
+  background: var(--surface); color: var(--muted);
+  font-family: inherit; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s;
+}
+.lang-btn.active { background: var(--orange); color: #fff; border-color: var(--orange); box-shadow: 0 0 16px rgba(255,107,26,0.3); }
+.form-wrap { position: relative; z-index: 10; max-width: 720px; margin: 16px auto; padding: 0 14px; }
+.form-card { background: var(--surface); border: 1px solid var(--border); border-radius: 18px; padding: 22px 18px; }
+.form-group { margin-bottom: 16px; }
+.form-label { display: block; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 7px; font-weight: 600; }
+.form-input {
+  width: 100%; padding: 11px 14px; background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 10px; color: var(--text); font-family: inherit; font-size: 15px; transition: border-color 0.2s; outline: none;
+}
+.form-input:focus { border-color: var(--orange); }
+.board-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px; }
+.board-btn {
+  padding: 9px 4px; border-radius: 9px; border: 1px solid var(--border);
+  background: var(--surface2); color: var(--muted);
+  font-family: inherit; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; text-align: center;
+}
+.board-btn.active { background: rgba(255,107,26,0.15); border-color: var(--orange); color: var(--orange); }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.form-select {
+  width: 100%; padding: 11px 14px; background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 10px; color: var(--text); font-family: inherit; font-size: 14px;
+  outline: none; cursor: pointer; appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b7a90' stroke-width='2' fill='none'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 12px center;
+}
+.topics-wrap { display: flex; flex-wrap: wrap; gap: 7px; }
+.topic-chip {
+  padding: 5px 12px; border-radius: 20px; border: 1px solid var(--border);
+  background: var(--surface2); color: var(--muted); font-family: inherit; font-size: 13px; cursor: pointer; transition: all 0.2s;
+}
+.topic-chip:hover { border-color: var(--orange); color: var(--orange); background: rgba(255,107,26,0.08); }
+.btn-generate {
+  width: 100%; padding: 15px; background: linear-gradient(135deg, var(--orange), var(--orange2));
+  border: none; border-radius: 12px; color: #fff; font-family: inherit;
+  font-size: 17px; font-weight: 700; cursor: pointer; transition: all 0.3s;
+  box-shadow: 0 4px 20px rgba(255,107,26,0.35); margin-top: 6px;
+}
+.btn-generate:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(255,107,26,0.5); }
+.btn-generate:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+.loading-wrap { display: none; text-align: center; padding: 48px 20px; }
+.spinner { width: 48px; height: 48px; margin: 0 auto 16px; border: 3px solid var(--border); border-top-color: var(--orange); border-radius: 50%; animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-text { color: var(--muted); font-size: 16px; }
+.quiz-wrap { display: none; max-width: 720px; margin: 0 auto; padding: 0 14px 40px; position: relative; z-index: 10; }
+.quiz-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 0; margin-bottom: 6px; flex-wrap: wrap; gap: 8px; }
+.quiz-title { font-size: 17px; font-weight: 700; color: var(--orange); }
+.quiz-meta { font-size: 13px; color: var(--muted); }
+.progress-bar { height: 4px; background: var(--surface2); border-radius: 2px; margin-bottom: 20px; overflow: hidden; }
+.progress-fill { height: 100%; background: linear-gradient(90deg, var(--orange), var(--orange2)); border-radius: 2px; transition: width 0.4s ease; }
+.question-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 22px 18px; margin-bottom: 14px; animation: slideIn 0.3s ease; }
+@keyframes slideIn { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
+.question-num { font-size: 11px; letter-spacing: 2px; color: var(--orange); text-transform: uppercase; margin-bottom: 9px; display: block; }
+.question-text { font-size: 16px; line-height: 1.6; font-weight: 600; margin-bottom: 18px; color: var(--text); }
+.options-grid { display: flex; flex-direction: column; gap: 9px; }
+.option-btn {
+  width: 100%; padding: 13px 16px; background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 11px; color: var(--text); font-family: inherit; font-size: 14px; font-weight: 500;
+  text-align: left; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 10px;
+}
+.option-btn:hover:not(:disabled) { border-color: var(--orange); background: rgba(255,107,26,0.08); }
+.option-btn.correct { background: var(--correct); border-color: var(--green); color: var(--green); }
+.option-btn.wrong { background: var(--wrong); border-color: var(--red); color: var(--red); }
+.option-btn:disabled { cursor: default; }
+.option-letter {
+  width: 26px; height: 26px; border-radius: 6px; background: var(--surface); border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex-shrink: 0; color: var(--orange);
+}
+.option-btn.correct .option-letter { background: var(--green); color: #000; border-color: var(--green); }
+.option-btn.wrong .option-letter { background: var(--red); color: #fff; border-color: var(--red); }
+.explanation {
+  display: none; margin-top: 12px; padding: 12px; background: rgba(0,207,255,0.06);
+  border: 1px solid rgba(0,207,255,0.2); border-radius: 10px;
+  font-size: 13px; line-height: 1.7; color: var(--cyan);
+}
+.nav-btns { display: flex; gap: 10px; margin-top: 6px; }
+.btn-nav {
+  flex: 1; padding: 12px; border-radius: 10px; border: 1px solid var(--border);
+  background: var(--surface2); color: var(--text); font-family: inherit; font-size: 15px; font-weight: 600; cursor: pointer; transition: all 0.2s;
+}
+.btn-nav:hover { border-color: var(--orange); color: var(--orange); }
+.btn-nav.primary { background: linear-gradient(135deg, var(--orange), var(--orange2)); border-color: transparent; color: #fff; }
+.result-wrap { display: none; max-width: 720px; margin: 0 auto; padding: 0 14px 40px; position: relative; z-index: 10; }
+.result-card { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 30px 22px; text-align: center; }
+.result-score { font-size: 68px; font-weight: 700; line-height: 1; background: linear-gradient(135deg, var(--orange), var(--orange2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.result-label { font-size: 15px; color: var(--muted); margin: 7px 0 3px; }
+.result-emoji { font-size: 44px; margin: 14px 0; }
+.result-msg { font-size: 18px; font-weight: 700; margin-bottom: 22px; }
+.result-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 22px; }
+.stat-box { background: var(--surface2); border-radius: 12px; padding: 12px 8px; border: 1px solid var(--border); }
+.stat-box-num { font-size: 22px; font-weight: 700; }
+.stat-box-label { font-size: 11px; color: var(--muted); margin-top: 3px; }
+.stat-box.correct-stat .stat-box-num { color: var(--green); }
+.stat-box.wrong-stat .stat-box-num { color: var(--red); }
+.stat-box.score-stat .stat-box-num { color: var(--orange); }
+.btn-retry { width: 100%; padding: 13px; background: linear-gradient(135deg, var(--orange), var(--orange2)); border: none; border-radius: 12px; color: #fff; font-family: inherit; font-size: 15px; font-weight: 700; cursor: pointer; transition: all 0.3s; margin-bottom: 9px; }
+.btn-retry:hover { transform: translateY(-2px); box-shadow: 0 6px 22px rgba(255,107,26,0.4); }
+.btn-new { width: 100%; padding: 13px; background: transparent; border: 1px solid var(--border); border-radius: 12px; color: var(--text); font-family: inherit; font-size: 15px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+.btn-new:hover { border-color: var(--orange); color: var(--orange); }
+.error-box { display: none; background: rgba(255,68,68,0.08); border: 1px solid rgba(255,68,68,0.3); border-radius: 12px; padding: 14px; color: #ff8888; font-size: 13px; line-height: 1.6; margin-top: 10px; text-align: center; }
+footer { position: relative; z-index: 10; text-align: center; padding: 18px; border-top: 1px solid var(--border); font-size: 12px; color: var(--muted); }
+footer span { color: var(--orange); }
+</style>
+</head>
+<body>
+
+<div class="bg-glow"></div>
+<div class="particles" id="particles"></div>
+
+<header>
+  <div class="powered-badge">
+    <div class="powered-dot"></div>
+    POWERED BY AI WITH BIKASH
+  </div>
+  <h1>
+    <span class="title-line1" id="t-line1">India's Smartest</span>
+    <span class="title-line2" id="t-line2">Quiz Generator</span>
+  </h1>
+  <p class="subtitle" id="t-subtitle">CBSE · ICSE · WB Board · SSC · NEET · JEE</p>
+  <div class="badges">
+    <span class="badge" id="b1">✅ 100% Free</span>
+    <span class="badge" id="b2">🌐 3 Languages</span>
+    <span class="badge" id="b3">⚡ Real AI</span>
+    <span class="badge" id="b4">📱 Mobile Friendly</span>
+  </div>
+</header>
+
+<div class="lang-bar">
+  <button class="lang-btn active" onclick="setLang('en',this)">English</button>
+  <button class="lang-btn" onclick="setLang('hi',this)">हिंदी</button>
+  <button class="lang-btn" onclick="setLang('bn',this)">বাংলা</button>
+</div>
+
+<div class="form-wrap" id="formSection">
+  <div class="form-card">
+    <div class="form-group">
+      <label class="form-label" id="l-topic">TOPIC / SUBJECT</label>
+      <input type="text" class="form-input" id="topicInput" placeholder="e.g. Freedom Fighters, Photosynthesis..." />
+    </div>
+    <div class="form-group">
+      <label class="form-label" id="l-board">BOARD / EXAM</label>
+      <div class="board-grid">
+        <button class="board-btn active" onclick="selectBoard(this,'CBSE')">CBSE</button>
+        <button class="board-btn" onclick="selectBoard(this,'ICSE')">ICSE</button>
+        <button class="board-btn" onclick="selectBoard(this,'WB Board')">WB Board</button>
+        <button class="board-btn" onclick="selectBoard(this,'SSC/UPSC')">SSC/UPSC</button>
+        <button class="board-btn" onclick="selectBoard(this,'NEET')">NEET</button>
+        <button class="board-btn" onclick="selectBoard(this,'JEE')">JEE</button>
+        <button class="board-btn" onclick="selectBoard(this,'GK')">GK</button>
+        <button class="board-btn" onclick="selectBoard(this,'General')">General</button>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group" style="margin:0">
+        <label class="form-label" id="l-class">CLASS / LEVEL</label>
+        <select class="form-select" id="classSelect">
+          <option>Class 1-5</option>
+          <option>Class 6-8</option>
+          <option selected>Class 9-10</option>
+          <option>Class 11-12</option>
+          <option>Graduation</option>
+          <option>Competitive</option>
+        </select>
+      </div>
+      <div class="form-group" style="margin:0">
+        <label class="form-label" id="l-questions">QUESTIONS</label>
+        <select class="form-select" id="questionsSelect">
+          <option>5</option>
+          <option selected>10</option>
+          <option>15</option>
+          <option>20</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row" style="margin-top:16px">
+      <div class="form-group" style="margin:0">
+        <label class="form-label" id="l-diff">DIFFICULTY</label>
+        <select class="form-select" id="diffSelect">
+          <option>Easy</option>
+          <option selected>Medium</option>
+          <option>Hard</option>
+        </select>
+      </div>
+      <div class="form-group" style="margin:0">
+        <label class="form-label" id="l-timer">TIMER</label>
+        <select class="form-select" id="timerSelect">
+          <option selected>No Timer</option>
+          <option>30 sec</option>
+          <option>1 min</option>
+          <option>2 min</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group" style="margin-top:16px">
+      <label class="form-label" id="l-topics">POPULAR TOPICS</label>
+      <div class="topics-wrap">
+        <button class="topic-chip" onclick="setTopic('Indian History')">Indian History</button>
+        <button class="topic-chip" onclick="setTopic('Freedom Fighters')">Freedom Fighters</button>
+        <button class="topic-chip" onclick="setTopic('Science')">Science</button>
+        <button class="topic-chip" onclick="setTopic('Mathematics')">Mathematics</button>
+        <button class="topic-chip" onclick="setTopic('Geography')">Geography</button>
+        <button class="topic-chip" onclick="setTopic('Current Affairs')">Current Affairs</button>
+        <button class="topic-chip" onclick="setTopic('Constitution')">Constitution</button>
+        <button class="topic-chip" onclick="setTopic('Computer Science')">Computer Science</button>
+        <button class="topic-chip" onclick="setTopic('Bengali Literature')">Bengali Literature</button>
+        <button class="topic-chip" onclick="setTopic('Cricket')">Cricket</button>
+      </div>
+    </div>
+    <div class="error-box" id="errorBox"></div>
+    <button class="btn-generate" id="generateBtn" onclick="generateQuiz()">
+      ✨ <span id="btn-generate-text">Generate Quiz</span>
+    </button>
+  </div>
+</div>
+
+<div class="loading-wrap" id="loadingSection">
+  <div style="max-width:720px;margin:0 auto;padding:0 16px">
+    <div class="spinner"></div>
+    <p class="loading-text" id="loadingText">Generating your quiz with AI...</p>
+  </div>
+</div>
+
+<div class="quiz-wrap" id="quizSection">
+  <div class="quiz-header">
+    <span class="quiz-title" id="quizTitle"></span>
+    <span class="quiz-meta" id="quizMeta"></span>
+  </div>
+  <div class="progress-bar">
+    <div class="progress-fill" id="progressFill" style="width:0%"></div>
+  </div>
+  <div id="questionContainer"></div>
+  <div class="nav-btns">
+    <button class="btn-nav" id="prevBtn" onclick="prevQuestion()" style="display:none">← Prev</button>
+    <button class="btn-nav primary" id="nextBtn" onclick="nextQuestion()">Next →</button>
+  </div>
+</div>
+
+<div class="result-wrap" id="resultSection">
+  <div class="result-card">
+    <div class="result-score" id="resultScore"></div>
+    <div class="result-label" id="resultLabel">Score</div>
+    <div class="result-emoji" id="resultEmoji"></div>
+    <div class="result-msg" id="resultMsg"></div>
+    <div class="result-stats">
+      <div class="stat-box correct-stat"><div class="stat-box-num" id="correctCount"></div><div class="stat-box-label" id="r-correct">Correct</div></div>
+      <div class="stat-box wrong-stat"><div class="stat-box-num" id="wrongCount"></div><div class="stat-box-label" id="r-wrong">Wrong</div></div>
+      <div class="stat-box score-stat"><div class="stat-box-num" id="percentScore"></div><div class="stat-box-label" id="r-percent">Score %</div></div>
+    </div>
+    <button class="btn-retry" id="r-retry" onclick="retryQuiz()">🔄 Try Again</button>
+    <button class="btn-new" id="r-new" onclick="newQuiz()">➕ New Quiz</button>
+  </div>
+</div>
+
+<footer>
+  🇮🇳 Powered by AI with <span>Bikash</span> · India's Quiz Generator
+</footer>
+
+<script>
+// ================================================
+// ⚙️ STEP 1: aistudio.google.com থেকে API key নাও
+// ⚙️ STEP 2: নিচের YOUR_GEMINI_API_KEY_HERE মুছে সেখানে key বসাও
+const GEMINI_API_KEY = "YOUR_GEMINI_API_KEY_HERE";
+// ================================================
+
+let currentLang = 'en';
+let selectedBoard = 'CBSE';
+let questions = [];
+let currentIndex = 0;
+let answers = [];
+let timerInterval = null;
+
+// Particles
+(function(){
+  const c = document.getElementById('particles');
+  for(let i=0;i<18;i++){
+    const p = document.createElement('div');
+    p.className = 'particle';
+    p.style.cssText = `left:${Math.random()*100}%;animation-duration:${6+Math.random()*8}s;animation-delay:${Math.random()*8}s`;
+    c.appendChild(p);
+  }
+})();
+
+const S = {
+  en: {
+    line1:"India's Smartest", line2:"Quiz Generator",
+    lTopic:"TOPIC / SUBJECT", lBoard:"BOARD / EXAM", lClass:"CLASS / LEVEL",
+    lQ:"QUESTIONS", lDiff:"DIFFICULTY", lTimer:"TIMER", lTopics:"POPULAR TOPICS",
+    genBtn:"Generate Quiz", loading:"Generating your quiz with AI...",
+    correct:"Correct", wrong:"Wrong", pct:"Score %",
+    retry:"🔄 Try Again", newq:"➕ New Quiz",
+    excellent:"Excellent! 🎉", great:"Great Job! 👏", good:"Good Work! 👍", keep:"Keep Practicing! 💪",
+    q:"Question", of:"of", placeholder:"e.g. Freedom Fighters, Photosynthesis...",
+    topicErr:"Please enter a topic!", apiErr:"API Key not set! Open the HTML file and replace YOUR_GEMINI_API_KEY_HERE with your key from aistudio.google.com"
+  },
+  hi: {
+    line1:"भारत का सबसे स्मार्ट", line2:"क्विज़ जनरेटर",
+    lTopic:"विषय / टॉपिक", lBoard:"बोर्ड / परीक्षा", lClass:"कक्षा / स्तर",
+    lQ:"प्रश्नों की संख्या", lDiff:"कठिनाई", lTimer:"टाइमर", lTopics:"लोकप्रिय विषय",
+    genBtn:"क्विज़ बनाएं", loading:"AI के साथ क्विज़ बना रहे हैं...",
+    correct:"सही", wrong:"गलत", pct:"स्कोर %",
+    retry:"🔄 फिर से", newq:"➕ नया क्विज़",
+    excellent:"शानदार! 🎉", great:"बहुत बढ़िया! 👏", good:"अच्छा काम! 👍", keep:"अभ्यास करते रहो! 💪",
+    q:"प्रश्न", of:"/", placeholder:"जैसे: स्वतंत्रता सेनानी, विज्ञान...",
+    topicErr:"कृपया विषय दर्ज करें!", apiErr:"API Key सेट नहीं है!"
+  },
+  bn: {
+    line1:"ভারতের সেরা", line2:"কুইজ জেনারেটর",
+    lTopic:"বিষয় / টপিক", lBoard:"বোর্ড / পরীক্ষা", lClass:"ক্লাস / স্তর",
+    lQ:"প্রশ্নের সংখ্যা", lDiff:"কঠিনতা", lTimer:"টাইমার", lTopics:"জনপ্রিয় বিষয়",
+    genBtn:"কুইজ তৈরি করো", loading:"AI দিয়ে কুইজ তৈরি হচ্ছে...",
+    correct:"সঠিক", wrong:"ভুল", pct:"স্কোর %",
+    retry:"🔄 আবার চেষ্টা", newq:"➕ নতুন কুইজ",
+    excellent:"অসাধারণ! 🎉", great:"চমৎকার! 👏", good:"ভালো করেছ! 👍", keep:"চর্চা চালিয়ে যাও! 💪",
+    q:"প্রশ্ন", of:"/", placeholder:"যেমন: স্বাধীনতা সংগ্রামী, বিজ্ঞান...",
+    topicErr:"অনুগ্রহ করে বিষয় লিখুন!", apiErr:"API Key সেট নেই! HTML ফাইলে YOUR_GEMINI_API_KEY_HERE-এর জায়গায় তোমার key বসাও।"
+  }
+};
+
+function setLang(lang, btn) {
+  currentLang = lang;
+  document.querySelectorAll('.lang-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const s = S[lang];
+  document.getElementById('t-line1').textContent = s.line1;
+  document.getElementById('t-line2').textContent = s.line2;
+  document.getElementById('l-topic').textContent = s.lTopic;
+  document.getElementById('l-board').textContent = s.lBoard;
+  document.getElementById('l-class').textContent = s.lClass;
+  document.getElementById('l-questions').textContent = s.lQ;
+  document.getElementById('l-diff').textContent = s.lDiff;
+  document.getElementById('l-timer').textContent = s.lTimer;
+  document.getElementById('l-topics').textContent = s.lTopics;
+  document.getElementById('btn-generate-text').textContent = s.genBtn;
+  document.getElementById('topicInput').placeholder = s.placeholder;
+  document.getElementById('r-correct').textContent = s.correct;
+  document.getElementById('r-wrong').textContent = s.wrong;
+  document.getElementById('r-percent').textContent = s.pct;
+  document.getElementById('r-retry').textContent = s.retry;
+  document.getElementById('r-new').textContent = s.newq;
+}
+
+function selectBoard(el, board) {
+  document.querySelectorAll('.board-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  selectedBoard = board;
+}
+
+function setTopic(t) { document.getElementById('topicInput').value = t; }
+
+async function generateQuiz() {
+  const s = S[currentLang];
+  const topic = document.getElementById('topicInput').value.trim();
+  if(!topic){ showError(s.topicErr); return; }
+  if(GEMINI_API_KEY === "YOUR_GEMINI_API_KEY_HERE"){ showError(s.apiErr); return; }
+  hideError();
+
+  const numQ = parseInt(document.getElementById('questionsSelect').value);
+  const cls = document.getElementById('classSelect').value;
+  const diff = document.getElementById('diffSelect').value;
+  const langName = currentLang==='bn'?'Bengali':currentLang==='hi'?'Hindi':'English';
+
+  showSection('loading');
+  document.getElementById('loadingText').textContent = s.loading;
+
+  const prompt = `Generate exactly ${numQ} multiple choice quiz questions about "${topic}" for ${selectedBoard} board, ${cls} level, ${diff} difficulty.
+Write all questions and answers in ${langName} language.
+Return ONLY a valid JSON array, no extra text, no markdown:
+[{"question":"...","options":["A","B","C","D"],"correct":0,"explanation":"..."}]
+"correct" is the 0-based index of the correct option.`;
+
+  try {
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        contents:[{parts:[{text:prompt}]}],
+        generationConfig:{temperature:0.7,maxOutputTokens:4096}
+      })
+    });
+
+    if(!res.ok){ const e=await res.json(); throw new Error(e.error?.message||'API Error '+res.status); }
+
+    const data = await res.json();
+    let text = data.candidates[0].content.parts[0].text;
+    text = text.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim();
+    const s1 = text.indexOf('['), s2 = text.lastIndexOf(']');
+    if(s1===-1||s2===-1) throw new Error('Bad response format');
+    questions = JSON.parse(text.slice(s1,s2+1));
+    if(!questions.length) throw new Error('No questions received');
+
+    currentIndex = 0;
+    answers = new Array(questions.length).fill(null);
+    showSection('quiz');
+    document.getElementById('quizTitle').textContent = `📚 ${topic}`;
+    renderQuestion();
+
+  } catch(e) {
+    showSection('form');
+    showError('❌ ' + e.message);
+  }
+}
+
+function renderQuestion() {
+  const q = questions[currentIndex];
+  const s = S[currentLang];
+  const total = questions.length;
+  const answered = answers[currentIndex];
+  const letters = ['A','B','C','D'];
+
+  document.getElementById('quizMeta').textContent = `${s.q} ${currentIndex+1} ${s.of} ${total}`;
+  document.getElementById('progressFill').style.width = `${((currentIndex+1)/total)*100}%`;
+
+  let html = `<div class="question-card">
+    <span class="question-num">${s.q} ${currentIndex+1} / ${total}</span>
+    <div class="question-text">${q.question}</div>
+    <div class="options-grid">`;
+
+  q.options.forEach((opt,i)=>{
+    let cls='';
+    if(answered!==null){
+      if(i===q.correct) cls='correct';
+      else if(i===answered) cls='wrong';
+    }
+    html+=`<button class="option-btn ${cls}" onclick="selectAnswer(${i})" ${answered!==null?'disabled':''}>
+      <span class="option-letter">${letters[i]}</span>${opt}</button>`;
+  });
+
+  html += `</div>`;
+  if(answered!==null && q.explanation){
+    html += `<div class="explanation" style="display:block">💡 ${q.explanation}</div>`;
+  }
+  html += `</div>`;
+  document.getElementById('questionContainer').innerHTML = html;
+
+  document.getElementById('prevBtn').style.display = currentIndex>0?'block':'none';
+  const nb = document.getElementById('nextBtn');
+  if(currentIndex===questions.length-1){
+    nb.textContent='🏁 Finish'; nb.onclick=showResult;
+  } else {
+    nb.textContent='Next →'; nb.onclick=nextQuestion;
+  }
+
+  setupTimer();
+}
+
+function selectAnswer(i){
+  if(answers[currentIndex]!==null) return;
+  answers[currentIndex]=i;
+  clearInterval(timerInterval);
+  renderQuestion();
+}
+
+function nextQuestion(){ if(currentIndex<questions.length-1){currentIndex++;renderQuestion();} }
+function prevQuestion(){ if(currentIndex>0){currentIndex--;renderQuestion();} }
+
+function setupTimer(){
+  clearInterval(timerInterval);
+  const tv = document.getElementById('timerSelect').value;
+  if(tv==='No Timer') return;
+  let t = tv==='30 sec'?30:tv==='1 min'?60:120;
+  const s = S[currentLang];
+  timerInterval = setInterval(()=>{
+    t--;
+    document.getElementById('quizMeta').textContent = `${s.q} ${currentIndex+1} ${s.of} ${questions.length} · ⏱ ${t}s`;
+    if(t<=0){
+      clearInterval(timerInterval);
+      if(answers[currentIndex]===null){ answers[currentIndex]=-1; renderQuestion(); }
+    }
+  },1000);
+}
+
+function showResult(){
+  clearInterval(timerInterval);
+  showSection('result');
+  const s = S[currentLang];
+  const correct = answers.filter((a,i)=>a===questions[i].correct).length;
+  const wrong = answers.filter((a,i)=>a!==null&&a!==-1&&a!==questions[i].correct).length;
+  const pct = Math.round((correct/questions.length)*100);
+  document.getElementById('resultScore').textContent = `${correct}/${questions.length}`;
+  document.getElementById('correctCount').textContent = correct;
+  document.getElementById('wrongCount').textContent = wrong;
+  document.getElementById('percentScore').textContent = `${pct}%`;
+  let emoji,msg;
+  if(pct>=90){emoji='🏆';msg=s.excellent;}
+  else if(pct>=70){emoji='⭐';msg=s.great;}
+  else if(pct>=50){emoji='👍';msg=s.good;}
+  else{emoji='📖';msg=s.keep;}
+  document.getElementById('resultEmoji').textContent=emoji;
+  document.getElementById('resultMsg').textContent=msg;
+}
+
+function retryQuiz(){
+  currentIndex=0; answers=new Array(questions.length).fill(null);
+  showSection('quiz'); renderQuestion();
+}
+
+function newQuiz(){ questions=[]; answers=[]; showSection('form'); }
+
+function showSection(s){
+  document.getElementById('formSection').style.display=s==='form'?'block':'none';
+  document.getElementById('loadingSection').style.display=s==='loading'?'block':'none';
+  document.getElementById('quizSection').style.display=s==='quiz'?'block':'none';
+  document.getElementById('resultSection').style.display=s==='result'?'block':'none';
+}
+
+function showError(msg){ const b=document.getElementById('errorBox'); b.textContent=msg; b.style.display='block'; }
+function hideError(){ document.getElementById('errorBox').style.display='none'; }
+</script>
+</body>
+</html>
